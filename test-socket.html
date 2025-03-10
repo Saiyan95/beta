@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beta Tech Support Socket Tester</title>
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .response {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .log {
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 20px;
+      font-family: monospace;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    .log-entry.received {
+      color: green;
+    }
+    .log-entry.sent {
+      color: blue;
+    }
+    .log-entry.error {
+      color: red;
+    }
+    .log-entry.info {
+      color: gray;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background-color: #f5f5f5;
+      border-color: #ddd;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Beta Tech Support Socket Tester</h1>
+  <p>This tool allows you to test the Socket.io functionality of the Beta Tech Support system.</p>
+  
+  <div class="card">
+    <h2>Socket Connection</h2>
+    <div class="form-group">
+      <label for="socket-url">Socket URL</label>
+      <input type="text" id="socket-url" value="http://localhost:5002">
+    </div>
+    <div>
+      <button id="connect-btn">Connect</button>
+      <button id="disconnect-btn">Disconnect</button>
+      <span id="connection-status">Disconnected</span>
+    </div>
+  </div>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="technician">Technician Room</div>
+    <div class="tab" data-tab="ticket">Ticket Room</div>
+    <div class="tab" data-tab="messages">Messages</div>
+  </div>
+  
+  <div id="technician" class="tab-content active">
+    <div class="card">
+      <h2>Technician Room</h2>
+      <p>Join or leave the technician room to receive notifications about new tickets.</p>
+      <div>
+        <button id="join-technician-btn">Join Technician Room</button>
+        <button id="leave-technician-btn">Leave Technician Room</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="ticket" class="tab-content">
+    <div class="card">
+      <h2>Ticket Room</h2>
+      <div class="form-group">
+        <label for="ticket-id">Ticket ID</label>
+        <input type="text" id="ticket-id" placeholder="Enter ticket ID">
+      </div>
+      <div>
+        <button id="join-ticket-btn">Join Ticket Room</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="messages" class="tab-content">
+    <div class="card">
+      <h2>Send Message</h2>
+      <div class="form-group">
+        <label for="message-ticket-id">Ticket ID</label>
+        <input type="text" id="message-ticket-id" placeholder="Enter ticket ID">
+      </div>
+      <div class="form-group">
+        <label for="message-content">Message</label>
+        <textarea id="message-content" rows="3" placeholder="Enter your message"></textarea>
+      </div>
+      <div>
+        <button id="send-message-btn">Send Message</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Socket Events Log</h2>
+    <div class="log" id="event-log"></div>
+  </div>
+  
+  <script>
+    // DOM Elements
+    const socketUrlInput = document.getElementById('socket-url');
+    const connectBtn = document.getElementById('connect-btn');
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    const connectionStatus = document.getElementById('connection-status');
+    const joinTechnicianBtn = document.getElementById('join-technician-btn');
+    const leaveTechnicianBtn = document.getElementById('leave-technician-btn');
+    const ticketIdInput = document.getElementById('ticket-id');
+    const joinTicketBtn = document.getElementById('join-ticket-btn');
+    const messageTicketIdInput = document.getElementById('message-ticket-id');
+    const messageContentInput = document.getElementById('message-content');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    const eventLog = document.getElementById('event-log');
+    
+    // Socket.io instance
+    let socket = null;
+    
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+    
+    // Log event to the event log
+    function logEvent(type, message) {
+      const entry = document.createElement('div');
+      entry.classList.add('log-entry', type);
+      entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+      eventLog.appendChild(entry);
+      eventLog.scrollTop = eventLog.scrollHeight;
+    }
+    
+    // Connect to Socket.io server
+    connectBtn.addEventListener('click', () => {
+      const url = socketUrlInput.value.trim();
+      if (!url) {
+        logEvent('error', 'Please enter a valid Socket URL');
+        return;
+      }
+      
+      try {
+        socket = io(url);
+        
+        // Connection events
+        socket.on('connect', () => {
+          connectionStatus.textContent = 'Connected';
+          connectionStatus.style.color = 'green';
+          logEvent('info', `Connected to ${url} with ID: ${socket.id}`);
+        });
+        
+        socket.on('disconnect', () => {
+          connectionStatus.textContent = 'Disconnected';
+          connectionStatus.style.color = 'red';
+          logEvent('info', 'Disconnected from server');
+        });
+        
+        socket.on('connect_error', (error) => {
+          connectionStatus.textContent = 'Connection Error';
+          connectionStatus.style.color = 'red';
+          logEvent('error', `Connection error: ${error.message}`);
+        });
+        
+        // Listen for ticket events
+        socket.on('newTicket', (data) => {
+          logEvent('received', `New ticket: ${JSON.stringify(data)}`);
+        });
+        
+        socket.on('ticketAssigned', (data) => {
+          logEvent('received', `Ticket assigned: ${JSON.stringify(data)}`);
+        });
+        
+        socket.on('message_received', (data) => {
+          logEvent('received', `Message received: ${JSON.stringify(data)}`);
+        });
+        
+      } catch (error) {
+        logEvent('error', `Error creating socket: ${error.message}`);
+      }
+    });
+    
+    // Disconnect from Socket.io server
+    disconnectBtn.addEventListener('click', () => {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+        connectionStatus.textContent = 'Disconnected';
+        connectionStatus.style.color = 'red';
+        logEvent('info', 'Manually disconnected from server');
+      } else {
+        logEvent('error', 'Not connected to any server');
+      }
+    });
+    
+    // Join technician room
+    joinTechnicianBtn.addEventListener('click', () => {
+      if (!socket) {
+        logEvent('error', 'Not connected to any server');
+        return;
+      }
+      
+      socket.emit('joinTechnicianRoom');
+      logEvent('sent', 'Joined technician room');
+    });
+    
+    // Leave technician room
+    leaveTechnicianBtn.addEventListener('click', () => {
+      if (!socket) {
+        logEvent('error', 'Not connected to any server');
+        return;
+      }
+      
+      socket.emit('leaveTechnicianRoom');
+      logEvent('sent', 'Left technician room');
+    });
+    
+    // Join ticket room
+    joinTicketBtn.addEventListener('click', () => {
+      if (!socket) {
+        logEvent('error', 'Not connected to any server');
+        return;
+      }
+      
+      const ticketId = ticketIdInput.value.trim();
+      if (!ticketId) {
+        logEvent('error', 'Please enter a valid ticket ID');
+        return;
+      }
+      
+      socket.emit('join_ticket', ticketId);
+      logEvent('sent', `Joined ticket room: ${ticketId}`);
+    });
+    
+    // Send message to ticket room
+    sendMessageBtn.addEventListener('click', () => {
+      if (!socket) {
+        logEvent('error', 'Not connected to any server');
+        return;
+      }
+      
+      const ticketId = messageTicketIdInput.value.trim();
+      const content = messageContentInput.value.trim();
+      
+      if (!ticketId) {
+        logEvent('error', 'Please enter a valid ticket ID');
+        return;
+      }
+      
+      if (!content) {
+        logEvent('error', 'Please enter a message');
+        return;
+      }
+      
+      const data = {
+        ticketId,
+        message: content,
+        sender: socket.id,
+        timestamp: new Date().toISOString()
+      };
+      
+      socket.emit('ticket_message', data);
+      logEvent('sent', `Sent message to ticket ${ticketId}: ${content}`);
+    });
+  </script>
+</body>
+</html>

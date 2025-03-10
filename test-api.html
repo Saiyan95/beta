@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beta Tech Support API Tester</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .response {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background-color: #f5f5f5;
+      border-color: #ddd;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Beta Tech Support API Tester</h1>
+  <p>Use this page to test the Beta Tech Support API endpoints.</p>
+  <p><strong>Instructions:</strong> Open this file directly in your browser by double-clicking it or right-clicking and selecting "Open with" your browser.</p>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="auth">Authentication</div>
+    <div class="tab" data-tab="tickets">Tickets</div>
+    <div class="tab" data-tab="users">Users</div>
+  </div>
+  
+  <div id="auth" class="tab-content active">
+    <div class="card">
+      <h2>Register Client</h2>
+      <div class="form-group">
+        <label for="register-username">Username</label>
+        <input type="text" id="register-username" value="Test User">
+      </div>
+      <div class="form-group">
+        <label for="register-email">Email</label>
+        <input type="email" id="register-email" value="test@example.com">
+      </div>
+      <div class="form-group">
+        <label for="register-password">Password</label>
+        <input type="password" id="register-password" value="password123">
+      </div>
+      <div class="form-group">
+        <label for="register-company">Company Name</label>
+        <input type="text" id="register-company" value="Test Company">
+      </div>
+      <div class="form-group">
+        <label for="register-department">Department</label>
+        <select id="register-department">
+          <option value="IT">IT</option>
+          <option value="Finance">Finance</option>
+          <option value="Human Resources">Human Resources</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Sales">Sales</option>
+          <option value="Operations">Operations</option>
+          <option value="Research & Development">Research & Development</option>
+          <option value="Customer Service">Customer Service</option>
+          <option value="Legal">Legal</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="register-phone">Phone Number</label>
+        <input type="text" id="register-phone" value="+201234567890">
+      </div>
+      <button onclick="register()">Register</button>
+      <div class="response" id="register-response"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Login</h2>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" value="test@example.com">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" value="password123">
+      </div>
+      <div class="form-group">
+        <label for="login-type">User Type</label>
+        <select id="login-type">
+          <option value="client">Client</option>
+          <option value="technician">Technician</option>
+        </select>
+      </div>
+      <button onclick="login()">Login</button>
+      <div class="response" id="login-response"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Get Profile</h2>
+      <button onclick="getProfile()">Get Profile</button>
+      <div class="response" id="profile-response"></div>
+    </div>
+  </div>
+  
+  <div id="tickets" class="tab-content">
+    <div class="card">
+      <h2>Create Ticket</h2>
+      <div class="form-group">
+        <label for="ticket-category">Category</label>
+        <select id="ticket-category">
+          <option value="software">Software</option>
+          <option value="hardware">Hardware</option>
+          <option value="network">Network</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ticket-product-name">Product Name</label>
+        <input type="text" id="ticket-product-name" value="Test Product">
+      </div>
+      <div class="form-group">
+        <label for="ticket-product-type">Product Type</label>
+        <input type="text" id="ticket-product-type" value="application">
+      </div>
+      <div class="form-group">
+        <label for="ticket-serial">Serial Number</label>
+        <input type="text" id="ticket-serial" value="SN12345">
+      </div>
+      <div class="form-group">
+        <label for="ticket-warranty">Warranty Status</label>
+        <select id="ticket-warranty">
+          <option value="true">In Warranty</option>
+          <option value="false">Out of Warranty</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ticket-warranty-expiry">Warranty Expiry</label>
+        <input type="date" id="ticket-warranty-expiry" value="2025-12-31">
+      </div>
+      <div class="form-group">
+        <label for="ticket-priority">Priority</label>
+        <select id="ticket-priority">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ticket-description">Description</label>
+        <textarea id="ticket-description" rows="4">This is a test ticket created via API</textarea>
+      </div>
+      <button onclick="createTicket()">Create Ticket</button>
+      <div class="response" id="create-ticket-response"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Get Tickets</h2>
+      <button onclick="getTickets()">Get Tickets</button>
+      <div class="response" id="get-tickets-response"></div>
+    </div>
+  </div>
+  
+  <div id="users" class="tab-content">
+    <div class="card">
+      <h2>Get Technicians</h2>
+      <button onclick="getTechnicians()">Get Technicians</button>
+      <div class="response" id="get-technicians-response"></div>
+    </div>
+  </div>
+  
+  <script>
+    // API URL
+    const API_URL = 'http://localhost:5002/api';
+    let token = localStorage.getItem('token');
+    
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+    
+    // Helper function to display response
+    function displayResponse(elementId, data) {
+      const element = document.getElementById(elementId);
+      element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+    
+    // Authentication functions
+    async function register() {
+      try {
+        const username = document.getElementById('register-username').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const companyName = document.getElementById('register-company').value;
+        const department = document.getElementById('register-department').value;
+        const phoneNumber = document.getElementById('register-phone').value;
+        
+        const response = await fetch(`${API_URL}/auth/client/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username,
+            email,
+            password,
+            role: 'client',
+            companyName,
+            department,
+            phoneNumber
+          })
+        });
+        
+        const data = await response.json();
+        displayResponse('register-response', data);
+        
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          token = data.token;
+        }
+      } catch (error) {
+        displayResponse('register-response', error.message);
+      }
+    }
+    
+    async function login() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const userType = document.getElementById('login-type').value;
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/${userType}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        displayResponse('login-response', data);
+        
+        if (data.token) {
+          token = data.token;
+          localStorage.setItem('token', token);
+          localStorage.setItem('userType', userType);
+        }
+      } catch (error) {
+        displayResponse('login-response', { error: error.message });
+      }
+    }
+    
+    async function getProfile() {
+      if (!token) {
+        displayResponse('profile-response', { error: 'No authentication token found. Please login first.' });
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/profile`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const data = await response.json();
+        displayResponse('profile-response', data);
+      } catch (error) {
+        displayResponse('profile-response', { error: error.message });
+      }
+    }
+    
+    // Ticket functions
+    async function createTicket() {
+      if (!token) {
+        displayResponse('create-ticket-response', { error: 'No authentication token found. Please login first.' });
+        return;
+      }
+      
+      const category = document.getElementById('ticket-category').value;
+      const productName = document.getElementById('ticket-product-name').value;
+      const productType = document.getElementById('ticket-product-type').value;
+      const serialNumber = document.getElementById('ticket-serial').value;
+      const warrantyStatus = document.getElementById('ticket-warranty').value === 'true';
+      const warrantyExpiry = document.getElementById('ticket-warranty-expiry').value;
+      const priority = document.getElementById('ticket-priority').value;
+      const description = document.getElementById('ticket-description').value;
+      
+      try {
+        const response = await fetch(`${API_URL}/tickets`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            category,
+            productName,
+            productType,
+            serialNumber,
+            warrantyStatus,
+            warrantyExpiry,
+            priority,
+            description
+          })
+        });
+        
+        const data = await response.json();
+        displayResponse('create-ticket-response', data);
+      } catch (error) {
+        displayResponse('create-ticket-response', { error: error.message });
+      }
+    }
+    
+    async function getTickets() {
+      if (!token) {
+        displayResponse('get-tickets-response', { error: 'No authentication token found. Please login first.' });
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/tickets`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const data = await response.json();
+        displayResponse('get-tickets-response', data);
+      } catch (error) {
+        displayResponse('get-tickets-response', { error: error.message });
+      }
+    }
+    
+    // User functions
+    async function getTechnicians() {
+      if (!token) {
+        displayResponse('get-technicians-response', { error: 'No authentication token found. Please login first.' });
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/users/technicians`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const data = await response.json();
+        displayResponse('get-technicians-response', data);
+      } catch (error) {
+        displayResponse('get-technicians-response', { error: error.message });
+      }
+    }
+  </script>
+</body>
+</html>

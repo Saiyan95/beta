@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Beta Tech Support - Login Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .links a {
+            display: block;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Beta Tech Support - Token Login Fix</h1>
+    <p>This page will set the authentication token in your browser's localStorage to fix login issues.</p>
+    
+    <button onclick="setToken()">Set Authentication Token</button>
+    <button onclick="clearToken()">Clear Authentication Token</button>
+    
+    <div id="status"></div>
+    
+    <div class="links" style="margin-top: 20px;">
+        <h3>Quick Links:</h3>
+        <a href="/" target="_blank">Home Page</a>
+        <a href="/admin" target="_blank">Admin Dashboard</a>
+        <a href="/admin/tickets" target="_blank">Admin Tickets</a>
+    </div>
+    
+    <script>
+        // This token was generated from our fix script
+        const adminToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2FkMWZiMzNiYWFlNjQ4ZDI2ZTUzYiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc0MTM0ODAxMCwiZXhwIjoxNzQxOTUyODEwfQ.D5ab_dhAdpVJqN0uXKavwchxu5b8B1riMqhRWHkYe3E';
+        
+        // User object for localStorage
+        const adminUser = {
+            _id: '67cad1fb33baae648d26e53b',
+            username: 'admin',
+            email: 'admin@beta-tech.com',
+            role: 'admin'
+        };
+        
+        function setToken() {
+            try {
+                localStorage.setItem('token', adminToken);
+                localStorage.setItem('user', JSON.stringify(adminUser));
+                
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = `
+                    <p class="success">✅ Authentication token set successfully!</p>
+                    <p>You can now navigate to <a href="/admin" target="_blank">Admin Dashboard</a> or <a href="/admin/tickets" target="_blank">Admin Tickets</a>.</p>
+                    <p>If you continue to experience issues, please try clearing your browser cache.</p>
+                    <h3>Token details:</h3>
+                    <pre>${adminToken}</pre>
+                    <h3>User details:</h3>
+                    <pre>${JSON.stringify(adminUser, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        function clearToken() {
+            try {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                document.getElementById('status').innerHTML = `<p>Authentication tokens cleared. You will need to log in again.</p>`;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

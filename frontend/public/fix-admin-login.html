@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Beta Tech Support - Admin Login Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .links a {
+            display: block;
+            margin: 5px 0;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Beta Tech Support - Admin Login Fix</h1>
+    <p>This page will set the authentication token in your browser's localStorage to fix login issues with the admin dashboard.</p>
+    
+    <div>
+        <h2>Option 1: One-Click Setup</h2>
+        <button onclick="setNewToken()">Set Admin Authentication Token</button>
+        <button onclick="clearToken()">Clear Authentication Token</button>
+    </div>
+    
+    <div id="status"></div>
+    
+    <div class="links" style="margin-top: 20px;">
+        <h2>Quick Links:</h2>
+        <a href="/" target="_blank">Home Page</a>
+        <a href="/admin" target="_blank">Admin Dashboard</a>
+        <a href="/admin/tickets" target="_blank">Admin Tickets</a>
+        <a href="/login-bypass" target="_blank">Login Bypass Page</a>
+    </div>
+    
+    <script>
+        // This token was generated from our latest admin user creation script
+        const adminToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2FkMWZiMzNiYWFlNjQ4ZDI2ZTUzYiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc0MTM0ODg2MiwiZXhwIjoxNzQxOTUzNjYyfQ.7zECGmsc-_KrNrXL1Y5lkK0NCV2L4FoZIHbX2Z0ZhAg';
+        
+        // User object for localStorage
+        const adminUser = {
+            _id: '67cad1fb33baae648d26e53b',
+            username: 'admin',
+            email: 'admin@beta-tech.com',
+            role: 'admin'
+        };
+        
+        function setNewToken() {
+            try {
+                localStorage.setItem('token', adminToken);
+                localStorage.setItem('user', JSON.stringify(adminUser));
+                
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = `
+                    <p class="success">u2705 Authentication token set successfully!</p>
+                    <p>You can now navigate to <a href="/admin" target="_blank">Admin Dashboard</a> or <a href="/admin/tickets" target="_blank">Admin Tickets</a>.</p>
+                    <p>If you continue to experience issues, please try clearing your browser cache.</p>
+                    <h3>Token details:</h3>
+                    <pre>${adminToken}</pre>
+                    <h3>User details:</h3>
+                    <pre>${JSON.stringify(adminUser, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<p style="color: red;">u274c Error: ${error.message}</p>`;
+            }
+        }
+        
+        function clearToken() {
+            try {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                document.getElementById('status').innerHTML = `<p>Authentication tokens cleared. You will need to log in again.</p>`;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<p style="color: red;">u274c Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
