@@ -197,47 +197,51 @@ const Login = () => {
             
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Typography variant="body2">
-                <Link to="/auth/forgot-password" style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
-                  Forgot Password?
+                <Link to="/forgot-password" style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+                  Forgot password?
                 </Link>
               </Typography>
             </Box>
             
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Typography variant="body2">
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
                 Don't have an account?{' '}
-                <Link to="/auth/register" style={{ 
-                  textDecoration: 'none', 
+                <Link to="/register" style={{
+                  textDecoration: 'none',
                   color: theme.palette.primary.main,
-                  fontWeight: 500,
-                  '&:hover': {
-                    textDecoration: 'underline'
-                  }
+                  fontWeight: 'bold'
                 }}>
-                  Register here
+                  Sign up
                 </Link>
               </Typography>
             </Box>
             
-            <Divider sx={{ my: 3 }}>
-              <Typography variant="caption" color="text.secondary">
-                Are you staff?
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Are you a staff member?{' '}
+                <Button
+                  onClick={() => navigate('/staff-login')}
+                  sx={{
+                    textTransform: 'none',
+                    color: theme.palette.primary.main,
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                      textDecoration: 'underline'
+                    }
+                  }}
+                >
+                  Login here
+                </Button>
               </Typography>
-            </Divider>
+            </Box>
             
-            <Box sx={{ textAlign: 'center' }}>
-              <Button 
-                variant="outlined" 
-                size="medium"
-                onClick={() => navigate('/auth/staff-login')}
-                sx={{ 
-                  px: 3,
-                  borderRadius: 2,
-                  fontWeight: 500,
-                }}
-              >
-                Go to Staff Login
-              </Button>
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Need to bypass login?{' '}
+                <Link to="/login-bypass" style={{ textDecoration: 'none' }}>
+                  Click here
+                </Link>
+              </Typography>
             </Box>
             
             {process.env.NODE_ENV === 'development' && (

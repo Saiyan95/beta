@@ -13,8 +13,48 @@ export const initSocket = (server) => {
   
   io = new Server(server, {
     cors: {
-      origin: [frontendUrl, 'http://localhost:3000', 'http://localhost:3001'],
+      origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Allow all localhost ports
+        if (origin.startsWith('http://localhost:')) {
+          return callback(null, true);
+        }
+        
+        // Allow specific production domains
+        const allowedOrigins = [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://localhost:3002',
+          'http://localhost:3003',
+          'http://localhost:3004',
+          'http://localhost:5000',
+          'http://localhost:5001',
+          'http://localhost:5002'
+        ];
+        
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        
+        console.log('Socket.IO CORS blocked for origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      },
       methods: ['GET', 'POST'],
+      credentials: true,
+      allowedHeaders: ['Authorization', 'Content-Type']
+    },
+    path: '/socket.io/',
+    connectTimeout: 20000,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    transports: ['websocket', 'polling'],
+    allowEIO3: true,
+    allowUpgrades: true,
+    maxHttpBufferSize: 1e8,
+    cors: {
+      origin: true,
       credentials: true
     }
   });
@@ -22,9 +62,28 @@ export const initSocket = (server) => {
   // Use the socket authentication middleware
   io.use(socketAuth);
 
+  // Handle connection errors
+  io.on('connect_error', (error) => {
+    console.error('Socket.IO connection error:', error);
+  });
+
+  io.on('error', (error) => {
+    console.error('Socket.IO server error:', error);
+  });
+
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.user.userId}, Role: ${socket.user.role}`);
     
+    // Set up ping/pong to keep connection alive
+    socket.on('ping', () => {
+      socket.emit('pong');
+    });
+
+    // Handle transport errors
+    socket.on('error', (error) => {
+      console.error(`Socket error for user ${socket.user.userId}:`, error);
+    });
+
     // Join user's personal room for notifications
     socket.on('joinUserRoom', (userId) => {
       if (socket.user.userId === userId) {

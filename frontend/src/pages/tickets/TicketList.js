@@ -25,7 +25,7 @@ const TicketList = () => {
 
   useEffect(() => {
     fetchTickets();
-  }, []);
+  }, [fetchTickets]);
 
   const fetchTickets = async () => {
     try {

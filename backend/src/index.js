@@ -13,6 +13,7 @@ import ticketRoutes from './routes/tickets.js';
 import userRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
 import technicalRoutes from './routes/technical.js';
+import chatRoutes from './routes/chat.js';
 
 // Import socket initialization
 import { initSocket } from './socket/socketServer.js';
@@ -90,26 +91,52 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration
-const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
-    if (process.env.ADDITIONAL_ORIGINS) {
-      allowedOrigins.push(...process.env.ADDITIONAL_ORIGINS.split(','));
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all localhost ports
+    if (origin.startsWith('http://localhost:')) {
+      return callback(null, true);
     }
     
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow specific production domains
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      'http://localhost:3004',
+      'http://localhost:5000',
+      'http://localhost:5001',
+      'http://localhost:5002'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+    
+    console.log('CORS blocked for origin:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  maxAge: 86400 // CORS preflight cache for 24 hours
-};
+  credentials: true
+}));
 
-app.use(cors(corsOptions));
+// Handle CORS preflight errors
+app.use((err, req, res, next) => {
+  if (err.message === 'Not allowed by CORS') {
+    console.log('CORS blocked for origin:', req.headers.origin);
+    return res.status(403).json({
+      error: 'CORS Error',
+      message: 'Origin not allowed',
+      origin: req.headers.origin
+    });
+  }
+  next(err);
+});
 
 // Body parsing middleware with size limits and validation
 app.use(express.json({
@@ -158,6 +185,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/technical', technicalRoutes);
+app.use('/api/chat', chatRoutes);
 
 // MongoDB connection with retry mechanism
 const connectDB = async (retries = 5) => {
@@ -292,22 +320,49 @@ process.on('unhandledRejection', (err) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5002;
+const findAvailablePort = async (startPort) => {
+  const net = await import('net');
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    
+    server.listen(startPort, () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`Port ${startPort} is in use, trying ${startPort + 1}`);
+        resolve(findAvailablePort(startPort + 1));
+      } else {
+        reject(err);
+      }
+    });
+  });
+};
 
-// Start server only after connecting to MongoDB
-connectDB().then(() => {
-  httpServer.listen(PORT, () => {
-    console.log(`
-Server Information:
+const startServer = async () => {
+  try {
+    const port = await findAvailablePort(5002);
+    console.log(`Starting server on port ${port}`);
+    
+    httpServer.listen(port, () => {
+      console.log(`Server Information:
 ------------------
 Status: Running
-Port: ${PORT}
+Port: ${port}
 Environment: ${process.env.NODE_ENV || 'development'}
 MongoDB: Connected
 Socket.IO: Initialized
-Rate Limit: ${limiter.max} requests per ${limiter.windowMs / 1000}s
+Rate Limit: ${limiter.max} requests per ${limiter.windowMs/1000}s
 Security: Enabled (Helmet, CORS, Rate Limiting)
-----------------------------------------
-    `);
-  });
-});
+----------------------------------------`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();

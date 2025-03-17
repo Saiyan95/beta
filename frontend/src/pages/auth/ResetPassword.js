@@ -57,9 +57,9 @@ const ResetPassword = () => {
         password: formData.password
       });
       
-      setSuccess('Password has been reset successfully!');
+      setSuccess('Password has been reset successfully.');
       setTimeout(() => {
-        navigate('/auth/login');
+        navigate('/login');
       }, 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reset password.');

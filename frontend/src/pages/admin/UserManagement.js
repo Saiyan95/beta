@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -31,7 +31,8 @@ import {
   Delete as DeleteIcon,
   Person as PersonIcon,
   Engineering as EngineeringIcon,
-  AdminPanelSettings as AdminIcon
+  AdminPanelSettings as AdminIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_URL } from '../../utils/apiConfig';
@@ -40,6 +41,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -49,10 +51,14 @@ const UserManagement = () => {
     username: '',
     phoneNumber: '',
     password: '',
-    role: 'technician', // Changed from 'technical' to 'technician'
+    role: 'technician',
     specialization: [],
     companyName: '',
     department: 'IT'
+  });
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -60,11 +66,7 @@ const UserManagement = () => {
     severity: 'success'
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Fetching users from:', `${API_URL}/admin/users`);
@@ -82,7 +84,11 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleOpenDialog = (mode, user = null) => {
     setDialogMode(mode);
@@ -110,7 +116,7 @@ const UserManagement = () => {
         username: '',
         phoneNumber: '',
         password: '',
-        role: 'technician', // Default to technician for admin user management
+        role: 'technician',
         specialization: [],
         companyName: '',
         department: 'IT'
@@ -151,16 +157,26 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
     try {
-      const response = await axios.post(
+      const userData = {
+        ...formData,
+        role: formData.role === 'technical' ? 'technician' : formData.role,
+        isTechnicalStaff: formData.role === 'technician',
+        hasPrivileges: formData.role === 'technician',
+        technicalPrivileges: formData.role === 'technician' ? {
+          canHandleTickets: true,
+          canUpdateTickets: true,
+          canViewAllTickets: true,
+          canAssignTickets: true,
+          canCloseTickets: true,
+          canAddComments: true,
+          canViewReports: true
+        } : undefined
+      };
+
+      await axios.post(
         `${API_URL}/admin/users`,
-        {
-          ...formData,
-          role: formData.role === 'technical' ? 'technician' : formData.role
-        },
+        userData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -168,7 +184,7 @@ const UserManagement = () => {
         }
       );
 
-      setSuccess('User created successfully');
+      showSnackbar('User created successfully', 'success');
       fetchUsers();
       handleCloseDialog();
     } catch (err) {
@@ -253,6 +269,66 @@ const UserManagement = () => {
     }));
   };
 
+  const handleOpenPasswordDialog = (user) => {
+    setSelectedUser(user);
+    setPasswordData({
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setOpenPasswordDialog(true);
+  };
+
+  const handleClosePasswordDialog = () => {
+    setOpenPasswordDialog(false);
+    setPasswordData({
+      newPassword: '',
+      confirmPassword: ''
+    });
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showSnackbar('Passwords do not match', 'error');
+      return;
+    }
+
+    try {
+      const userData = {
+        password: passwordData.newPassword,
+        // Ensure technician privileges are maintained
+        isTechnicalStaff: selectedUser.role === 'technician',
+        hasPrivileges: selectedUser.role === 'technician'
+      };
+
+      await axios.patch(
+        `${API_URL}/admin/users/${selectedUser._id}`,
+        userData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      showSnackbar('Password updated successfully', 'success');
+      handleClosePasswordDialog();
+    } catch (error) {
+      console.error('Error updating password:', error);
+      showSnackbar(
+        error.response?.data?.message || 'Failed to update password',
+        'error'
+      );
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3, mb: 3 }}>
@@ -323,6 +399,9 @@ const UserManagement = () => {
                     <TableCell>
                       <IconButton onClick={() => handleOpenDialog('edit', user)} color="primary">
                         <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleOpenPasswordDialog(user)} color="primary">
+                        <LockIcon />
                       </IconButton>
                       <IconButton onClick={() => handleDeleteUser(user._id)} color="error">
                         <DeleteIcon />
@@ -503,6 +582,43 @@ const UserManagement = () => {
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained" color="primary">
             {dialogMode === 'create' ? 'Create' : 'Update'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Password Change Dialog */}
+      <Dialog open={openPasswordDialog} onClose={handleClosePasswordDialog}>
+        <DialogTitle>Change Password for {selectedUser?.username}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="New Password"
+                name="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={handlePasswordChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Confirm New Password"
+                name="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={handlePasswordChange}
+                required
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePasswordDialog}>Cancel</Button>
+          <Button onClick={handlePasswordSubmit} variant="contained" color="primary">
+            Update Password
           </Button>
         </DialogActions>
       </Dialog>

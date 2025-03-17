@@ -44,8 +44,8 @@ const LoginBypass = () => {
       
       // Redirect after a short delay
       setTimeout(() => {
-        navigate('/admin');
-      }, 2000);
+        navigate('/login');
+      }, 1000);
     } catch (err) {
       console.error('Bypass login error:', err);
       setStatus('error');
@@ -72,7 +72,7 @@ const LoginBypass = () => {
               Login Successful!
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Redirecting to admin dashboard...
+              Redirecting to login...
             </Typography>
             <CircularProgress size={24} sx={{ mt: 2 }} />
           </Box>

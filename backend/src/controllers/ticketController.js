@@ -1,4 +1,4 @@
-import Ticket from '../models/Ticket.js';
+import { Ticket } from '../models/Ticket.js';
 import User from '../models/User.js';
 import { getIO } from '../socket/socketServer.js';
 

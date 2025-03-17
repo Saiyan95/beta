@@ -50,9 +50,52 @@ const userSchema = new mongoose.Schema({
     type: [String],
     required: function() { return this.role === 'technician'; }
   },
+  technicalPrivileges: {
+    type: {
+      canHandleTickets: { type: Boolean, default: false },
+      canUpdateTickets: { type: Boolean, default: false },
+      canViewAllTickets: { type: Boolean, default: false },
+      canAssignTickets: { type: Boolean, default: false },
+      canCloseTickets: { type: Boolean, default: false },
+      canAddComments: { type: Boolean, default: false },
+      canViewReports: { type: Boolean, default: false }
+    },
+    default: function() {
+      return this.role === 'technician' ? {
+        canHandleTickets: true,
+        canUpdateTickets: true,
+        canViewAllTickets: true,
+        canAssignTickets: true,
+        canCloseTickets: true,
+        canAddComments: true,
+        canViewReports: true
+      } : undefined;
+    }
+  },
   activeTickets: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Ticket'
+  }],
+  assignedTickets: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ticket'
+  }],
+  chatHistory: [{
+    ticketId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ticket'
+    },
+    messages: [{
+      sender: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      content: String,
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   }],
   createdAt: {
     type: Date,
@@ -100,5 +143,57 @@ userSchema.virtual('fullName').get(function() {
 // Ensure virtuals are included when converting to JSON
 userSchema.set('toJSON', { virtuals: true });
 userSchema.set('toObject', { virtuals: true });
+
+// Add method to update active tickets
+userSchema.methods.updateActiveTickets = async function() {
+  const Ticket = mongoose.model('Ticket');
+  this.activeTickets = await Ticket.find({
+    assignedTo: this._id,
+    status: { $in: ['open', 'in_progress'] }
+  }).select('_id');
+  await this.save();
+};
+
+// Add method to get ticket statistics
+userSchema.methods.getTicketStats = async function() {
+  const Ticket = mongoose.model('Ticket');
+  const stats = await Ticket.aggregate([
+    { $match: { assignedTo: this._id } },
+    { $group: {
+      _id: '$status',
+      count: { $sum: 1 }
+    }}
+  ]);
+  
+  return {
+    total: stats.reduce((acc, curr) => acc + curr.count, 0),
+    active: stats.find(s => s._id === 'open' || s._id === 'in_progress')?.count || 0,
+    completed: stats.find(s => s._id === 'closed')?.count || 0
+  };
+};
+
+// Add method to add chat message
+userSchema.methods.addChatMessage = async function(ticketId, senderId, content) {
+  const chatIndex = this.chatHistory.findIndex(chat => chat.ticketId.toString() === ticketId.toString());
+  
+  if (chatIndex === -1) {
+    this.chatHistory.push({
+      ticketId,
+      messages: [{
+        sender: senderId,
+        content,
+        timestamp: new Date()
+      }]
+    });
+  } else {
+    this.chatHistory[chatIndex].messages.push({
+      sender: senderId,
+      content,
+      timestamp: new Date()
+    });
+  }
+  
+  await this.save();
+};
 
 export default mongoose.model('User', userSchema);

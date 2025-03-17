@@ -105,8 +105,8 @@ const Register = () => {
       delete userData.confirmPassword; // Remove confirmPassword as it's not needed for API
       
       await register(userData);
-      // Redirect to login page with email pre-filled
-      navigate(`/auth/login?email=${encodeURIComponent(formData.email)}`);
+      // Redirect to login with email parameter
+      navigate(`/login?email=${encodeURIComponent(formData.email)}`);
     } catch (error) {
       console.error('Registration error:', error.response?.data || error.message);
       
@@ -255,7 +255,7 @@ const Register = () => {
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2">
               Already have an account?{' '}
-              <Link to="/auth/login" style={{ textDecoration: 'none' }}>
+              <Link to="/login" style={{ textDecoration: 'none' }}>
                 Sign in
               </Link>
             </Typography>

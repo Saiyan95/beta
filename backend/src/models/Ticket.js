@@ -133,6 +133,4 @@ ticketSchema.pre('save', async function(next) {
   }
 });
 
-const Ticket = mongoose.model('Ticket', ticketSchema);
-
-export default Ticket;
+export const Ticket = mongoose.model('Ticket', ticketSchema);

@@ -12,8 +12,6 @@ import {
   CircularProgress,
   Tabs,
   Tab,
-  Card,
-  CardContent,
   useTheme
 } from '@mui/material';
 import { AdminPanelSettings, EngineeringOutlined, SupportAgent } from '@mui/icons-material';
@@ -33,6 +31,7 @@ const StaffLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -83,7 +82,7 @@ const StaffLogin = () => {
       setDebugInfo(prev => prev + `\nAttempting ${userType} login with: ${formData.email}`);
       
       // Try direct login first to debug
-      const directResult = await directLoginAttempt();
+      await directLoginAttempt();
       setDebugInfo(prev => prev + '\nDirect login complete, attempting context login...');
       
       const user = await login(formData.email, formData.password);
@@ -101,7 +100,7 @@ const StaffLogin = () => {
         setDebugInfo(prev => prev + `\nRole mismatch: Expected admin, got ${user.role}`);
         setLoading(false);
         return;
-      } else if (userType === 'technician' && user.role !== 'technician') {
+      } else if (userType === 'technician' && user.role !== 'technical') {
         setError('This account does not have technical staff privileges');
         setDebugInfo(prev => prev + `\nRole mismatch: Expected technician, got ${user.role}`);
         setLoading(false);
@@ -121,7 +120,7 @@ const StaffLogin = () => {
       // Redirect based on user role
       if (user.role === 'admin') {
         navigate('/admin');
-      } else if (user.role === 'technician') {
+      } else if (user.role === 'technical') {
         navigate('/technician');
       }
       

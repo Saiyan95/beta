@@ -63,7 +63,18 @@ router.post('/users', async (req, res) => {
       password,
       role: role || 'client',
       phoneNumber,
-      ...(role === 'technician' && { specialization }),
+      ...(role === 'technician' && { 
+        specialization,
+        technicalPrivileges: {
+          canHandleTickets: true,
+          canUpdateTickets: true,
+          canViewAllTickets: true,
+          canAssignTickets: true,
+          canCloseTickets: true,
+          canAddComments: true,
+          canViewReports: true
+        }
+      }),
       ...(role === 'client' && { companyName, department })
     });
 

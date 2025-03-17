@@ -30,11 +30,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   joinTicketRoom,
   leaveTicketRoom,
-  sendTicketMessage,
   onSocketEvent,
   offSocketEvent
 } from '../../services/socketService';
 import { TICKET_ENDPOINTS } from '../../utils/apiConfig';
+import TicketChat from '../../components/TicketChat';
 
 // Status color mapping
 const statusColors = {
@@ -278,311 +278,358 @@ const TicketDetails = () => {
   }
 
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-        {/* Ticket Header */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            Ticket #{ticket.ticketNumber}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-            <Chip 
-              label={ticket.status.replace('_', ' ').toUpperCase()} 
-              color={statusColors[ticket.status] || 'default'}
-            />
-            <Chip 
-              label={ticket.priority.toUpperCase()} 
-              color={priorityColors[ticket.priority] || 'default'}
-            />
-            <Chip 
-              label={ticket.category.toUpperCase()} 
-              color={ticket.category?.toLowerCase() === 'hardware' ? 'primary' : 
-                     ticket.category?.toLowerCase() === 'software' ? 'secondary' : 
-                     ticket.category?.toLowerCase() === 'network' ? 'success' : 
-                     ticket.category?.toLowerCase() === 'account' ? 'warning' : 'default'}
-            />
-          </Box>
-        </Box>
+    <Box sx={{ p: 3 }}>
+      <Grid container spacing={3}>
+        {/* Main ticket details */}
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 3, mb: 3 }}>
+            {/* Ticket Header */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h4" gutterBottom>
+                Ticket #{ticket.ticketNumber}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                <Chip 
+                  label={ticket.status.replace('_', ' ').toUpperCase()} 
+                  color={statusColors[ticket.status] || 'default'}
+                />
+                <Chip 
+                  label={ticket.priority.toUpperCase()} 
+                  color={priorityColors[ticket.priority] || 'default'}
+                />
+                <Chip 
+                  label={ticket.category.toUpperCase()} 
+                  color={ticket.category?.toLowerCase() === 'hardware' ? 'primary' : 
+                         ticket.category?.toLowerCase() === 'software' ? 'secondary' : 
+                         ticket.category?.toLowerCase() === 'network' ? 'success' : 
+                         ticket.category?.toLowerCase() === 'account' ? 'warning' : 'default'}
+                />
+              </Box>
+            </Box>
 
-        <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 3 }} />
 
-        {/* Ticket Details */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Issue Details</Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong>Description:</strong> {ticket.description || 'No description provided'}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Category:</strong> {ticket.category.charAt(0).toUpperCase() + ticket.category.slice(1)}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Priority:</strong> {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
-                </Typography>
-                {ticket.numberOfUsers > 1 && (
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Users Affected:</strong> {ticket.numberOfUsers}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Product Information</Typography>
-                <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
-                  {ticket.product.name || 'Unknown Product'}
-                </Typography>
-                
-                {ticket.product.type && (
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Product Type:</strong> {ticket.product.type}
-                  </Typography>
-                )}
-                
-                {ticket.product.serialNumber && (
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Serial Number:</strong> {ticket.product.serialNumber}
-                  </Typography>
-                )}
-                
-                {ticket.product.warrantyStatus && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2">
-                      <strong>Warranty Status:</strong> {ticket.product.warrantyStatus.inWarranty ? 'In Warranty' : 'Out of Warranty'}
+            {/* Ticket Details */}
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Issue Details</Typography>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
+                      <strong>Description:</strong> {ticket.description || 'No description provided'}
                     </Typography>
-                    {ticket.product.warrantyStatus.inWarranty && ticket.product.warrantyStatus.expiryDate && (
-                      <Typography variant="body2">
-                        <strong>Expires:</strong> {new Date(ticket.product.warrantyStatus.expiryDate).toLocaleDateString()}
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Category:</strong> {ticket.category.charAt(0).toUpperCase() + ticket.category.slice(1)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Priority:</strong> {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
+                    </Typography>
+                    {ticket.numberOfUsers > 1 && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Users Affected:</strong> {ticket.numberOfUsers}
                       </Typography>
                     )}
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Support Details</Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Client:</strong> {ticket.client?.name || 'Unknown'}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Created:</strong> {new Date(ticket.createdAt).toLocaleString()}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Last Updated:</strong> {new Date(ticket.updatedAt).toLocaleString()}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Assigned To:</strong> {ticket.assignedTo?.name || 'Unassigned'}
-                </Typography>
-
-                {/* Actions for technicians */}
-                {(user.role === 'technician' || user.role === 'admin') && (
-                  <Box sx={{ mt: 2 }}>
-                    {!ticket.assignedTo && (
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
-                        onClick={handleAssignTicket}
-                        sx={{ mr: 1, mb: 1 }}
-                      >
-                        Assign to Me
-                      </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Product Information</Typography>
+                    <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                      {ticket.product.name || 'Unknown Product'}
+                    </Typography>
+                    
+                    {ticket.product.type && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Product Type:</strong> {ticket.product.type}
+                      </Typography>
                     )}
-
-                    {(ticket.assignedTo?._id === user.userId || user.role === 'admin') && (
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="subtitle2" gutterBottom>Update Status:</Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {ticket.status !== 'in_progress' && (
-                            <Button 
-                              size="small" 
-                              variant="outlined" 
-                              onClick={() => handleStatusChange('in_progress')}
-                            >
-                              In Progress
-                            </Button>
-                          )}
-                          {ticket.status !== 'on_hold' && (
-                            <Button 
-                              size="small" 
-                              variant="outlined" 
-                              onClick={() => handleStatusChange('on_hold')}
-                            >
-                              On Hold
-                            </Button>
-                          )}
-                          {ticket.status !== 'resolved' && (
-                            <Button 
-                              size="small" 
-                              variant="outlined" 
-                              color="success"
-                              onClick={() => handleStatusChange('resolved')}
-                            >
-                              Resolved
-                            </Button>
-                          )}
-                          {ticket.status !== 'closed' && (
-                            <Button 
-                              size="small" 
-                              variant="outlined" 
-                              color="error"
-                              onClick={() => handleStatusChange('closed')}
-                            >
-                              Close
-                            </Button>
-                          )}
-                        </Box>
+                    
+                    {ticket.product.serialNumber && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Serial Number:</strong> {ticket.product.serialNumber}
+                      </Typography>
+                    )}
+                    
+                    {ticket.product.warrantyStatus && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2">
+                          <strong>Warranty Status:</strong> {ticket.product.warrantyStatus.inWarranty ? 'In Warranty' : 'Out of Warranty'}
+                        </Typography>
+                        {ticket.product.warrantyStatus.inWarranty && ticket.product.warrantyStatus.expiryDate && (
+                          <Typography variant="body2">
+                            <strong>Expires:</strong> {new Date(ticket.product.warrantyStatus.expiryDate).toLocaleDateString()}
+                          </Typography>
+                        )}
                       </Box>
                     )}
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Support Details</Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Client:</strong> {ticket.client?.name || 'Unknown'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Created:</strong> {new Date(ticket.createdAt).toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Last Updated:</strong> {new Date(ticket.updatedAt).toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Assigned To:</strong> {ticket.assignedTo?.name || 'Unassigned'}
+                    </Typography>
+
+                    {/* Actions for technicians */}
+                    {(user.role === 'technician' || user.role === 'admin') && (
+                      <Box sx={{ mt: 2 }}>
+                        {!ticket.assignedTo && (
+                          <Button 
+                            variant="contained" 
+                            color="primary" 
+                            onClick={handleAssignTicket}
+                            sx={{ mr: 1, mb: 1 }}
+                          >
+                            Assign to Me
+                          </Button>
+                        )}
+
+                        {(ticket.assignedTo?._id === user.userId || user.role === 'admin') && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="subtitle2" gutterBottom>Update Status:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {ticket.status !== 'in_progress' && (
+                                <Button 
+                                  size="small" 
+                                  variant="outlined" 
+                                  onClick={() => handleStatusChange('in_progress')}
+                                >
+                                  In Progress
+                                </Button>
+                              )}
+                              {ticket.status !== 'on_hold' && (
+                                <Button 
+                                  size="small" 
+                                  variant="outlined" 
+                                  onClick={() => handleStatusChange('on_hold')}
+                                >
+                                  On Hold
+                                </Button>
+                              )}
+                              {ticket.status !== 'resolved' && (
+                                <Button 
+                                  size="small" 
+                                  variant="outlined" 
+                                  color="success"
+                                  onClick={() => handleStatusChange('resolved')}
+                                >
+                                  Resolved
+                                </Button>
+                              )}
+                              {ticket.status !== 'closed' && (
+                                <Button 
+                                  size="small" 
+                                  variant="outlined" 
+                                  color="error"
+                                  onClick={() => handleStatusChange('closed')}
+                                >
+                                  Close
+                                </Button>
+                              )}
+                            </Box>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 3 }} />
+
+            {/* Messages Section */}
+            <Typography variant="h6" gutterBottom>Messages</Typography>
+            
+            {messages.length > 0 ? (
+              <List sx={{ width: '100%', bgcolor: 'background.paper', mb: 3 }}>
+                {messages.map((message, index) => (
+                  <ListItem 
+                    key={message._id || index} 
+                    alignItems="flex-start"
+                    sx={{
+                      bgcolor: message.sender?._id === user.userId ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                      borderRadius: 1,
+                      mb: 1
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: message.sender?.role === 'technician' ? 'primary.main' : 'secondary.main' }}>
+                        {message.sender?.name?.charAt(0) || '?'}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Typography variant="subtitle1">
+                          {message.sender?.name || 'Unknown'}
+                          <Typography 
+                            component="span" 
+                            variant="body2" 
+                            color="text.secondary"
+                            sx={{ ml: 1 }}
+                          >
+                            {new Date(message.timestamp).toLocaleString()}
+                          </Typography>
+                        </Typography>
+                      }
+                      secondary={message.content}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Alert severity="info" sx={{ mb: 3 }}>No messages yet</Alert>
+            )}
+
+            {/* Message Input */}
+            <Box component="form" onSubmit={handleSendMessage} sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                variant="outlined"
+                placeholder="Type your message here..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                disabled={messageSending}
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={!newMessage.trim() || messageSending}
+                sx={{ alignSelf: 'flex-end' }}
+              >
+                {messageSending ? <CircularProgress size={24} /> : 'Send'}
+              </Button>
+            </Box>
+
+            {/* Review Dialog */}
+            <Dialog open={reviewDialog} onClose={() => setReviewDialog(false)}>
+              <DialogTitle>Submit Review</DialogTitle>
+              <DialogContent>
+                <Box sx={{ my: 2 }}>
+                  <Typography component="legend">Rating</Typography>
+                  <Rating
+                    value={reviewData.rating}
+                    onChange={(event, newValue) => {
+                      setReviewData(prev => ({ ...prev, rating: newValue }));
+                    }}
+                  />
+                </Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Comments"
+                  value={reviewData.comment}
+                  onChange={(e) => setReviewData(prev => ({ ...prev, comment: e.target.value }))}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setReviewDialog(false)}>Cancel</Button>
+                <Button onClick={handleSubmitReview} variant="contained" color="primary">
+                  Submit Review
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Show review button for clients when ticket is resolved */}
+            {user.role === 'client' && 
+             ticket.status === 'resolved' && 
+             !ticket.review && (
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setReviewDialog(true)}
+                >
+                  Submit Review
+                </Button>
+              </Box>
+            )}
+
+            {/* Show review if it exists */}
+            {ticket.review && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom>Review</Typography>
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Rating value={ticket.review.rating} readOnly />
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                        {new Date(ticket.review.submittedAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                    {ticket.review.comment && (
+                      <Typography variant="body1">{ticket.review.comment}</Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
+          </Paper>
         </Grid>
 
-        <Divider sx={{ my: 3 }} />
-
-        {/* Messages Section */}
-        <Typography variant="h6" gutterBottom>Messages</Typography>
-        
-        {messages.length > 0 ? (
-          <List sx={{ width: '100%', bgcolor: 'background.paper', mb: 3 }}>
-            {messages.map((message, index) => (
-              <ListItem 
-                key={message._id || index} 
-                alignItems="flex-start"
-                sx={{
-                  bgcolor: message.sender?._id === user.userId ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
-                  borderRadius: 1,
-                  mb: 1
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: message.sender?.role === 'technician' ? 'primary.main' : 'secondary.main' }}>
-                    {message.sender?.name?.charAt(0) || '?'}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="subtitle1">
-                      {message.sender?.name || 'Unknown'}
-                      <Typography 
-                        component="span" 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ ml: 1 }}
-                      >
-                        {new Date(message.timestamp).toLocaleString()}
-                      </Typography>
-                    </Typography>
-                  }
-                  secondary={message.content}
-                />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Alert severity="info" sx={{ mb: 3 }}>No messages yet</Alert>
-        )}
-
-        {/* Message Input */}
-        <Box component="form" onSubmit={handleSendMessage} sx={{ display: 'flex', gap: 1 }}>
-          <TextField
-            fullWidth
-            multiline
-            rows={2}
-            variant="outlined"
-            placeholder="Type your message here..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            disabled={messageSending}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={!newMessage.trim() || messageSending}
-            sx={{ alignSelf: 'flex-end' }}
-          >
-            {messageSending ? <CircularProgress size={24} /> : 'Send'}
-          </Button>
-        </Box>
-
-        {/* Review Dialog */}
-        <Dialog open={reviewDialog} onClose={() => setReviewDialog(false)}>
-          <DialogTitle>Submit Review</DialogTitle>
-          <DialogContent>
-            <Box sx={{ my: 2 }}>
-              <Typography component="legend">Rating</Typography>
-              <Rating
-                value={reviewData.rating}
-                onChange={(event, newValue) => {
-                  setReviewData(prev => ({ ...prev, rating: newValue }));
-                }}
-              />
-            </Box>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Comments"
-              value={reviewData.comment}
-              onChange={(e) => setReviewData(prev => ({ ...prev, comment: e.target.value }))}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setReviewDialog(false)}>Cancel</Button>
-            <Button onClick={handleSubmitReview} variant="contained" color="primary">
-              Submit Review
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Show review button for clients when ticket is resolved */}
-        {user.role === 'client' && 
-         ticket.status === 'resolved' && 
-         !ticket.review && (
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setReviewDialog(true)}
-            >
-              Submit Review
-            </Button>
-          </Box>
-        )}
-
-        {/* Show review if it exists */}
-        {ticket.review && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>Review</Typography>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Rating value={ticket.review.rating} readOnly />
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                    {new Date(ticket.review.submittedAt).toLocaleDateString()}
+        {/* Sidebar with chat and technician info */}
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Assigned Technician
+            </Typography>
+            {ticket.assignedTo ? (
+              <>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1">
+                    {ticket.assignedTo.firstName} {ticket.assignedTo.lastName}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {ticket.assignedTo.specialization.join(', ')}
                   </Typography>
                 </Box>
-                {ticket.review.comment && (
-                  <Typography variant="body1">{ticket.review.comment}</Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Box>
-        )}
-      </Paper>
-    </Container>
+                
+                {/* Active tickets count */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Active Tickets
+                  </Typography>
+                  <Chip
+                    label={`${ticket.assignedTo.activeTickets?.length || 0} Active`}
+                    color="primary"
+                    variant="outlined"
+                  />
+                </Box>
+              </>
+            ) : (
+              <Typography color="text.secondary">
+                No technician assigned
+              </Typography>
+            )}
+          </Paper>
+
+          {/* Chat interface */}
+          <Paper sx={{ height: '400px' }}>
+            <TicketChat ticketId={ticket._id} />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

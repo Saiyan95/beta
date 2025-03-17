@@ -31,7 +31,7 @@ const ForgotPassword = () => {
       const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
       setSuccess('Password reset instructions have been sent to your email.');
       setTimeout(() => {
-        navigate('/auth/login');
+        navigate('/login');
       }, 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to process password reset request.');
@@ -80,7 +80,7 @@ const ForgotPassword = () => {
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2">
               Remember your password?{' '}
-              <Link to="/auth/login" style={{ textDecoration: 'none' }}>
+              <Link to="/login" style={{ textDecoration: 'none' }}>
                 Sign in
               </Link>
             </Typography>
